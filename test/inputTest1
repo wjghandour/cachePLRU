@@ -1,0 +1,21 @@
+associativity	8
+preorderTreeTraversal
+insertLine	54	0
+insertLine	55	1
+insertLine	56	2
+insertLine	57	3
+insertLine	58	4
+insertLine	59	5	
+insertLine	60	6
+insertLine	61	7
+findLine	61
+preorderTreeTraversal
+findPLRU
+insertLine	62	8
+accessLine	54
+insertLine	63	9
+invalidateLineTag	63
+insertLine	64	10
+findLine	64
+findLine	58
+findLine	77
