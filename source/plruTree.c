@@ -31,8 +31,8 @@ struct node* generateTree(int level, int depth) {
     internalIndex[0]=0;
     internalIndex[1]=1;
     internalIndex[2]=3;
-    internalIndex[4]=7;
-    internalIndex[5]=31;
+    internalIndex[3]=7;
+    internalIndex[4]=31;
     leafIndex = 0;
   }
 
