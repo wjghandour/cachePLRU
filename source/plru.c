@@ -38,7 +38,7 @@ int main (int argc, const char * argv[])  {
   char line[500];
   const char *delim = "\t\n";
   char *token, *inTag, *inData;
-  struct node* lruRootParse;
+  struct node* lruRootParse = NULL;
    
   while (fgets(line, sizeof(line), in_file)) {
 
@@ -61,7 +61,9 @@ int main (int argc, const char * argv[])  {
 	if ( inTag != NULL){
 	  inData = strtok(NULL,delim);
 
-	  insertLine(lruRootParse, atoi(inTag),  atoi(inData));   
+	  if (lruRootParse != NULL){
+	    insertLine(lruRootParse, atoi(inTag),  atoi(inData));
+	  }
 	}
 
       }
@@ -71,8 +73,10 @@ int main (int argc, const char * argv[])  {
     else if(!strcmp(token , "accessLine" )){ 
      if ( token != NULL){
 	inTag = strtok(NULL,delim);
-	
-	accessLine(lruRootParse, atoi(inTag));
+
+	if (lruRootParse != NULL){
+	  accessLine(lruRootParse, atoi(inTag));
+	}
      }
    
     }
@@ -81,7 +85,9 @@ int main (int argc, const char * argv[])  {
       if ( token != NULL) {
 	inTag = strtok(NULL,delim);
 
-	findLine(lruRootParse, atoi(inTag));
+	if (lruRootParse != NULL){	
+	  findLine(lruRootParse, atoi(inTag));
+	}
       }
      
     }
@@ -90,17 +96,23 @@ int main (int argc, const char * argv[])  {
       if ( token != NULL) {
 	inTag = strtok(NULL,delim);
 
-	invalidateLineTag(lruRootParse, atoi(inTag));
+	if (lruRootParse != NULL){
+	  invalidateLineTag(lruRootParse, atoi(inTag));
+	}
       }
      
     }
     
-    else if(!strcmp(token , "findPLRU" )){ 
+    else if(!strcmp(token , "findPLRU" )){
+      if (lruRootParse != NULL){
 	findPLRU(lruRootParse);
+      }
     }
 
     else if(!strcmp(token , "preorderTreeTraversal" )){
+      if (lruRootParse != NULL){
 	preorderTreeTraversal(lruRootParse);
+      }
     }     
 
   }
