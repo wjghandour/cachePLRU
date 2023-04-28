@@ -98,8 +98,8 @@ struct node* generateTree(int level, int depth) {
     newNode->right->level = level + 1;
     newNode->right->index=leafIndex++;
     newNode->right->parent=newNode;
-     newNode->left->left = NULL;
-    newNode->left->right = NULL;
+     newNode->right->left = NULL;
+    newNode->right->right = NULL;
     
   }
 
