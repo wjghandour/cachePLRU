@@ -24,6 +24,14 @@ int main (int argc, const char * argv[])  {
         return EXIT_FAILURE; //1;
   }
 
+  #if defined(TEST) || defined(TEST2)
+  #ifdef TEST_STDERR
+  setTestLog(stderr);
+  #else
+  setTestLog(stdout);
+  #endif
+  #endif
+
   FILE *in_file  = fopen(argv[1], "r"); // read only
 
   // test for file not existing.
@@ -68,17 +76,6 @@ int main (int argc, const char * argv[])  {
 
       }
       
-    }
-
-    else if(!strcmp(token , "accessLine" )){ 
-     if ( token != NULL){
-	inTag = strtok(NULL,delim);
-
-	if (lruRootParse != NULL){
-	  accessLine(lruRootParse, atoi(inTag));
-	}
-     }
-   
     }
 
     else if(!strcmp(token , "findLine" )){ 

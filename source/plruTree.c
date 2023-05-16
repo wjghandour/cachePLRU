@@ -20,7 +20,19 @@ Date: March 2023
 int internalIndex[5]={0, 1, 3, 7, 31};
 int leafIndex = 0;
 
-
+// Only used when -DTEST or -DTEST2, must be initialized with setTestLog
+static FILE *testlog_file;
+#define log_printf(...) (testlog_file != NULL ? fprintf(testlog_file, __VA_ARGS__): 0)
+#ifdef TEST
+#define test_printf(...) log_printf(__VA_ARGS__)
+#else
+#define test_printf(...) ((void)0)
+#endif
+#ifdef TEST2
+#define test2_printf(...) log_printf(__VA_ARGS__)
+#else
+#define test2_printf(...) ((void)0)
+#endif
 
 // Create a tree for a given cache associativity
 struct node* generateTree(int level, int depth) { 
@@ -108,8 +120,20 @@ struct node* generateTree(int level, int depth) {
 
 
 struct node* createTree(int associativity) {
-  int depth = log2(associativity); 
+  int depth = log2(associativity);
   return generateTree(0, depth);
+}
+
+uint32_t getIndex(struct node* node) {
+    return node->index;
+}
+
+uint64_t getTag(struct node* node) {
+    return node->tag;
+}
+
+int getData(struct node* node) {
+    return node->data;
 }
 
 //find pseudo LRU block
@@ -124,9 +148,7 @@ int findPLRU(struct node* root){
       p = p->left;
     }
   }
-  #ifdef TEST
-  printf("findPLRU:  PLRU leaf node:  index, level and tag: %d %d %ld\n" , p->index,   p->level, p->tag);
-  #endif
+  test_printf("findPLRU:  PLRU leaf node:  index, level and tag: %d %d %ld\n" , p->index,   p->level, p->tag);
   return p->index; // we can also return here the node if needed
   
 }
@@ -164,24 +186,18 @@ struct node* preorderTreeTraversal(struct node* root) {
   if (root == NULL) {
     return NULL;
   }
-  
-  if ((root->leaf) && !(root->valid)){
-    #ifdef TEST2
-    printf("Tree traversal: empty leaf node: level = %d,  index = %d.  \n", root->level, root->index);
-    #endif
+
+  if (root->leaf) {
+    if (!root->valid) {
+      test2_printf("Tree traversal: empty leaf node: level = %d,  index = %d.  \n", root->level, root->index);
+    } else {
+      test2_printf("Tree traversal: leaf node with valid data: level = %d,  index = %d, data = %d.  \n", root->level, root->index, root->data);
+    }
   }
   else {
-    
-    if ((root->leaf) && (root->valid)) {
-      #ifdef TEST2
-      printf("Tree traversal: leaf node with valid data: level = %d,  index = %d, data = %d.  \n", root->level, root->index, root->data);
-      #endif
-    }
-    else {
-      #ifdef TEST2
-      printf("Tree traversal: internal node: level = %d,  index = %d.  \n", root->level, root->index);
-      #endif
-    }
+
+    test2_printf("Tree traversal: internal node: level = %d,  index = %d.  \n", root->level, root->index);
+
     struct node*  returnedNode;
     returnedNode = preorderTreeTraversal(root->left); 
     if (returnedNode != NULL){
@@ -204,8 +220,10 @@ struct node* preorderTreeTraversal(struct node* root) {
 // if no empty line is found, null is returned
 struct node* preorderLRUTraversal(struct node* root) {  
   if (root == NULL) return NULL;
-  if ((root->leaf) && !(root->valid)){  
-    return root;
+  if (root->leaf) {
+    if (!root->valid) {
+      return root;
+    }
   }
   else {
     struct node*  returnedNode;
@@ -230,10 +248,13 @@ struct node* preorderLRUTraversal(struct node* root) {
 // it is used when this leaf is the PLRU and we need to replace it
 struct node* findLeaf(struct node* root, int index) {
   if (root == NULL) return NULL;
-  if (root->leaf && (root->index == index)){
-    return root;
+  if (root->leaf) {
+    if (root->index == index) {
+      return root;
+    } else {
+      return NULL;
+    }
   }
-
   struct node*  returnedNode;
   returnedNode = findLeaf(root->left, index);
   if (returnedNode != NULL){
@@ -255,13 +276,13 @@ struct node* findLeaf(struct node* root, int index) {
 // it returns the found leaf node so that we can update its data
 struct node*  findLine(struct node* root, uint64_t tag) {  //NOTE; THIS NEEDS TO BE UPDATED TO ACCESS USING SET INDEX AND TAG
   if (root == NULL) return NULL;
-  if (root->leaf && root->valid && root->tag == tag) {
+  if (root->leaf) {
+    if (root->valid && root->tag == tag) {
 
-    #ifdef  TEST
-    printf("findLine: line corresponding to tag  %ld found in the cache.\n", tag);
-    #endif
-    
-    return root;
+      test_printf("findLine: line corresponding to tag  %ld found in the cache.\n", tag);
+
+      return root;
+    }
   }
   else {
 
@@ -290,9 +311,8 @@ struct node* replaceLine(struct node* root, uint64_t tag,  int data, int index) 
   selectedLeaf->data = data;
   selectedLeaf->valid = true;
 
-  #ifdef TEST
-  printf("replaceLine: replace line at index %d, by a line  with tag %ld and data %d.\n", index, tag, data);
-  #endif
+  test_printf("replaceLine: replace line at index %d, by a line  with tag %ld and data %d.\n", index, tag, data);
+
   return selectedLeaf;
 }
 
@@ -308,23 +328,18 @@ bool insertLine(struct node* root, uint64_t tag, int data) {
 
   if (searchedNode != NULL){
     searchedNode->data = data;
-    #ifdef TEST
-    printf("insertLine: line with tag %ld is already in the cache, we update it with the new data %d\n", tag, data);
-    #endif
+    test_printf("insertLine: line with tag %ld is already in the cache, we update it with the new data %d\n", tag, data);
+    promotePMRU(searchedNode);
   }
   else {
 
-    #ifdef TEST
-    printf("insertLine: line with tag %ld is not in the cache\n", tag);
-    #endif
+    test_printf("insertLine: line with tag %ld is not in the cache\n", tag);
     
     struct node* tmp = preorderLRUTraversal(root);
 
     if (tmp == NULL){// the set is full
 
-       #ifdef TEST
-       printf("insertLine: tree is full, we need to evict PLRU to insert new line: tag %ld, data %d. \n", tag, data);       
-       #endif
+      test_printf("insertLine: tree is full, we need to evict PLRU to insert new line: tag %ld, data %d. \n", tag, data);
     
       int tmpIndex = findPLRU(root);
     
@@ -334,9 +349,7 @@ bool insertLine(struct node* root, uint64_t tag, int data) {
     }
     else {
 
-       #ifdef TEST
-       printf("insertLine: there is empty place to insert the new line: tag %ld, data %d. \n", tag, data);       
-       #endif
+      test_printf("insertLine: there is empty place to insert the new line: tag %ld, data %d. \n", tag, data);
       
       tmp->valid = true;
       tmp->tag = tag;
@@ -345,49 +358,22 @@ bool insertLine(struct node* root, uint64_t tag, int data) {
     
     }
 
+    return false;
   }
   
   return true;
 }
 
 
-
-//when a line is accessed we need to promote it
-int  accessLine(struct node* root, uint64_t tag) {  //NOTE; THIS NEEDS TO BE UPDATED TO ACCESS USING SET INDEX AND TAG
-  if (root == NULL) return 0;
-  if (root->leaf && root->valid && root->tag == tag) {
-    #ifdef TEST
-    printf("accessLine: line corresponding to tag %ld found in the cache. We promote it to PMRU.\n", tag);
-    #endif
-    promotePMRU(root);
-    return root->data;
-  }
-  else {
-
-    int  returnedData;
-    returnedData = accessLine(root->left, tag);
-    if (returnedData != 0){  // the content might be 0; we need to have a better checking ????????
-      return returnedData;
-    }
-
-    returnedData = accessLine(root->right, tag);
-    if (returnedData != 0){
-      return returnedData;
-    }
-  }
-  // we will handle this if needed by adding another nonrecursive function
-  //printf("accessLine: line corresponding to tag %ld not found \n", tag);
-  return 0; // what ohter value can we return here to signify non valid returned value such as NULL
-}
-
-
 //invalidate function
 bool invalidateLineIndex(struct node* root, int lineIndex) { 
   if (root == NULL) return false ;
-  if (root->leaf && (root->index == lineIndex)) {
-    //printf("we have invalidated the line with index %d \n", lineIndex);
-    root->valid = false;
-    return true;
+  if (root->leaf) {
+    if (root->index == lineIndex) {
+      //test_printf("we have invalidated the line with index %d \n", lineIndex);
+      root->valid = false;
+      return true;
+    }
   }
   else {
 
@@ -409,12 +395,12 @@ bool invalidateLineIndex(struct node* root, int lineIndex) {
 //it invalidates a given line in a set that corresponds to a specific tag
 bool invalidateLineTag(struct node* root, uint64_t tag) { 
   if (root == NULL) return false ;
-  if (root->leaf && (root->tag == tag)) {
-    #ifdef TEST
-    printf("invalidateLineTag: we have invalidated the line with tag %ld.\n", tag);
-    #endif
-    root->valid = false;
-    return true;
+  if (root->leaf) {
+    if (root->tag == tag) {
+      test_printf("invalidateLineTag: we have invalidated the line with tag %ld.\n", tag);
+      root->valid = false;
+      return true;
+    }
   }
   else {
 
@@ -432,5 +418,6 @@ bool invalidateLineTag(struct node* root, uint64_t tag) {
   return false;
 }
 
-
-
+void setTestLog(FILE *testlog) {
+    testlog_file = testlog;
+}

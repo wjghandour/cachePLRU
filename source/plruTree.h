@@ -40,6 +40,12 @@ struct node* generateTree(int level, int depth);
 
 struct node* createTree(int associativity);
 
+uint32_t getIndex(struct node* node);
+
+uint64_t getTag(struct node* node);
+
+int getData(struct node* node);
+
 int findPLRU(struct node* root);
 
 void promotePMRU(struct node* inputNode);
@@ -56,9 +62,8 @@ struct node* replaceLine(struct node* root, uint64_t tag,  int data, int index);
 
 bool insertLine(struct node* root, uint64_t tag, int data);
 
-int  accessLine(struct node* root, uint64_t tag);
-
 bool invalidateLineIndex(struct node* root, int lineIndex);
 
 bool invalidateLineTag(struct node* root, uint64_t tag);
 
+void setTestLog(FILE* testlog);
