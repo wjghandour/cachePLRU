@@ -12,7 +12,6 @@ findLine	61
 preorderTreeTraversal
 findPLRU
 insertLine	62	8
-accessLine	54
 insertLine	63	9
 invalidateLineTag	63
 insertLine	64	10
